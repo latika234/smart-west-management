@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Waste Management Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<!-- Header -->
+<header class="header">
+    <div class="header-content">
+        <div class="header-left">
+            <h1>🗑️ Smart Waste Management System</h1>
+            <p>IoT-Based Waste Monitoring & Route Optimization</p>
+        </div>
+
+        <div class="header-right">
+            <a href="/analytics" class="btn btn-primary">📊 Analytics</a>
+        </div>
+    </div>
+</header>
+
+<!-- Main Dashboard -->
+<div class="container">
+
+    <!-- Statistics -->
+    <div class="stats-grid">
+
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-info">
+                <h3 id="totalBins">0</h3>
+                <p>Total Bins</p>
+            </div>
+        </div>
+
+        <div class="stat-card critical">
+            <div class="stat-icon">⚠️</div>
+            <div class="stat-info">
+                <h3 id="criticalBins">0</h3>
+                <p>Critical Bins</p>
+            </div>
+        </div>
+
+        <div class="stat-card warning">
+            <div class="stat-icon">🔔</div>
+            <div class="stat-info">
+                <h3 id="needsCollection">0</h3>
+                <p>Needs Collection</p>
+            </div>
+        </div>
+
+        <div class="stat-card success">
+            <div class="stat-icon">✅</div>
+            <div class="stat-info">
+                <h3 id="normalBins">0</h3>
+                <p>Normal Status</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+
+        <!-- LEFT SIDE -->
+        <div>
+
+                        <!-- Map Panel -->
+            <div class="panel map-panel">
+                <div class="panel-header">
+                    <h2>📍 Bin Locations Map</h2>
+
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+
+                        <!-- 🔎 Starting Location Autocomplete -->
+                        <div style="position:relative;">
+                            <input 
+                                type="text" 
+                                id="startLocationInput" 
+                                placeholder="Search Starting Location..."
+                                style="
+                                    padding:8px;
+                                    width:260px;
+                                    border-radius:6px;
+                                    border:1px solid #ccc;
+                                    outline:none;
+                                "
+                            />
+
+                            <!-- Suggestions Dropdown -->
+                            <div id="locationSuggestions"
+                                style="
+                                    position:absolute;
+                                    top:100%;
+                                    left:0;
+                                    background:white;
+                                    border:1px solid #ddd;
+                                    width:100%;
+                                    max-height:200px;
+                                    overflow-y:auto;
+                                    z-index:9999;
+                                    display:none;
+                                    border-radius:6px;
+                                    box-shadow:0 4px 10px rgba(0,0,0,0.15);
+                                ">
+                            </div>
+                        </div>
+
+                        <!-- 🔵 Buttons -->
+                        <button id="findBinBtn" class="btn btn-primary">
+                            Find Bin
+                        </button>
+
+                        <button id="generateRouteBtn" class="btn btn-success">
+                            Generate Route
+                        </button>
+
+                        <button id="truckFullBtn" class="btn btn-danger">
+                            🚛 Is Truck Full?
+                        </button>
+
+                        <button id="changeRouteBtn" class="btn btn-warning">
+                            🔁 Change Route
+                        </button>
+
+                    </div>
+                </div>
+
+                <!-- 🗺️ Map -->
+                <div id="map" class="map-container"></div>
+
+                <!-- 📌 Legend -->
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <span class="marker marker-green"></span> Normal (0-69%)
+                    </div>
+                    <div class="legend-item">
+                        <span class="marker marker-yellow"></span> Needs Collection (70-79%)
+                    </div>
+                    <div class="legend-item">
+                        <span class="marker marker-red"></span> Critical (80-100%)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Route Summary -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>📊 Route Summary</h2>
+                </div>
+
+                <div id="routeSummary" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:15px;">
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="routeBins">0</h3>
+                            <p>Bins To Collect</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="routeDistance">0 km</h3>
+                            <p>Estimated Distance</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="routeTime">0 min</h3>
+                            <p>Estimated Time</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="routeFuel">0 L</h3>
+                            <p>Fuel Consumption</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <h3 id="routeCO2">0 kg</h3>
+                            <p>CO₂ Emission</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT SIDE -->
+<div>
+
+    <!-- Add New Bin Panel -->
+    <div class="panel">
+        <div class="panel-header">
+            <h2>➕ Add New Bin</h2>
+        </div>
+
+        <form id="addBinForm" class="form-grid">
+            <div class="form-group">
+                <label>Bin Name:</label>
+                <input type="text" id="binName" placeholder="e.g. FC Road Bin" required>
+            </div>
+
+            <div class="form-group">
+                <label>Latitude:</label>
+                <input type="number" step="0.0001" id="latitude" required>
+            </div>
+
+            <div class="form-group">
+                <label>Longitude:</label>
+                <input type="number" step="0.0001" id="longitude" required>
+            </div>
+
+            <div class="form-group">
+                <label>Address:</label>
+                <input type="text" id="address" required>
+            </div>
+
+            <div class="form-group">
+                <label>Capacity (Liters):</label>
+                <input type="number" id="capacity" required>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-success">Add Bin</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Spacer (Separation) -->
+    <div style="height:30px;"></div>
+
+    <!-- All Bins Panel -->
+    <div class="panel">
+        <div class="panel-header">
+            <h2>🗑️ All Bins</h2>
+        </div>
+
+        <div class="bins-list" id="binsList">
+            <p class="loading">Loading bins...</p>
+        </div>
+    </div>
+
+</div>
+
+    <!-- Sensor Simulator -->
+    <div class="panel">
+        <div class="panel-header">
+            <h2>🧪 Simulate Sensor Data</h2>
+        </div>
+
+        <form id="simulateSensorForm" class="form-grid">
+            <div class="form-group">
+                <label>Select Bin:</label>
+                <select id="sensorBinID" required>
+                    <option value="">-- Select Bin --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Fill Level (%):</label>
+                <input type="number" id="fillLevel" min="0" max="100" required>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-warning">📡 Send Sensor Data</button>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+    <p>Smart Waste Management System | BE Computer Engineering Project | 2026</p>
+</footer>
+
+<!-- Firebase SDK -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAK3Ll6AL7IDQId-qzpp3mf37RZdmATdiQ",
+        authDomain: "smart-waste-management-afb88.firebaseapp.com",
+        databaseURL: "https://smart-waste-management-afb88-default-rtdb.firebaseio.com",
+        projectId: "smart-waste-management-afb88"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    window.firebaseDatabase = database;
+    window.firebaseRef = ref;
+    window.firebaseOnValue = onValue;
+</script>
+
+<script src="js/app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Waste Analytics</title>
+    <link rel="stylesheet" href="css/style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAK3Ll6AL7IDQId-qzpp3mf37RZdmATdiQ",
+            authDomain: "smart-waste-management-afb88.firebaseapp.com",
+            databaseURL: "https://smart-waste-management-afb88-default-rtdb.firebaseio.com",
+            projectId: "smart-waste-management-afb88"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        const binsRef = ref(database, 'bins');
+
+        let barChart;
+        let pieChart;
+
+        onValue(binsRef, (snapshot) => {
+            const bins = snapshot.val() || {};
+            const binsArray = Object.values(bins);
+
+            updateCharts(binsArray);
+        });
+
+        function updateCharts(bins) {
+
+            const labels = bins.map((b, i) => `Bin ${i+1}`);
+            const fillLevels = bins.map(b => b.currentFillLevel || 0);
+
+            const normal = bins.filter(b => b.currentFillLevel < 70).length;
+            const warning = bins.filter(b => b.currentFillLevel >= 70 && b.currentFillLevel < 80).length;
+            const critical = bins.filter(b => b.currentFillLevel >= 80).length;
+
+            if (barChart) barChart.destroy();
+            if (pieChart) pieChart.destroy();
+
+            const ctx1 = document.getElementById('barChart').getContext('2d');
+            barChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Fill Level (%)',
+                        data: fillLevels
+                    }]
+                }
+            });
+
+            const ctx2 = document.getElementById('pieChart').getContext('2d');
+            pieChart = new Chart(ctx2, {
+                type: 'pie',
+                data: {
+                    labels: ['Normal', 'Needs Collection', 'Critical'],
+                    datasets: [{
+                        data: [normal, warning, critical]
+                    }]
+                }
+            });
+        }
+    </script>
+</head>
+
+<body>
+<header class="header">
+    <div class="header-left">
+        <h1>📊 Smart Waste Analytics Dashboard</h1>
+    </div>
+
+    <div class="header-right">
+        <a href="/dashboard" class="btn btn-primary">← Back to Dashboard</a>
+    </div>
+</header>
+
+    <div class="container">
+        <div class="panel">
+            <h2>📈 Fill Level Comparison</h2>
+            <canvas id="barChart"></canvas>
+        </div>
+
+        <div class="panel" style="margin-top:30px;">
+            <h2>🥧 Status Distribution</h2>
+            <canvas id="pieChart"></canvas>
+        </div>
+    </div>
+</body>
+</html>
